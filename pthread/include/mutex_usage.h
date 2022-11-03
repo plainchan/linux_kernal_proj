@@ -1,83 +1,54 @@
 #ifndef MUTEX_USAGE_H
 #define MUTEX_USAGE_H
 
-#include<pthread.h>
-#include<unistd.h>
-#include<stdio.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <sys/syscall.h>
 
-#define size 30
+#define SIZE 100000
 
 pthread_mutex_t mutex;
 
-
-void* add(void *arg)
+void *add(void *arg)
 {
+// #define USE_MUTEX
+#ifdef USE_MUTEX
     pthread_mutex_lock(&mutex);
-    int *arr = (int*)arg;
-    for(int i=0;i<size;++i)
+#endif
+
+    int *p = (int *)arg;
+    for (int i = 0; i < SIZE; ++i)
     {
-        ++(arr[i]);
-        usleep(100);
+        ++(*p);
     }
+
+#ifdef USE_MUTEX
     pthread_mutex_unlock(&mutex);
     pthread_exit(NULL);
+#endif
 }
-void* print(void *arg)
-{
-    pthread_mutex_lock(&mutex);
-    int *arr = (int*)arg;
-    for(int i=0;i<size;++i)
-    {
-        printf("%d ",arr[i]);
-        usleep(80);
-    }
-    printf("\n");
-    pthread_mutex_unlock(&mutex);
-    pthread_exit(NULL);
-}
-
 void test_mutex()
 {
-    int arr[size]={0};
 
-    for(int i=0;i<size;++i)
-    {
-        printf("%d ",arr[i]);
-    }
-    printf("\n");
+    int count = 0;
 
-    pthread_t t1,t2;
-    pthread_mutex_init(&mutex,NULL);
+    printf("init num: %d\n", count);
 
-    pthread_create(&t1,NULL,add,&arr);
-    pthread_create(&t2,NULL,print,&arr);
+    pthread_t t1, t2;
+    pthread_mutex_init(&mutex, NULL);
+
+    pthread_create(&t1, NULL, add, &count);
+    pthread_create(&t2, NULL, add, &count);
 
 
-    pthread_join(t1,NULL);
-    pthread_join(t2,NULL);
+    pthread_join(t1, NULL);
+    pthread_join(t2, NULL);
 
     pthread_mutex_destroy(&mutex);
-    printf("\n");
+
+    printf("result: %d\n", count);
+    printf("real : %d\n", SIZE * 2);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #endif
